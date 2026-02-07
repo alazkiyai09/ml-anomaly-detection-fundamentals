@@ -1,4 +1,5 @@
 import csv
+import os
 import requests
 import pandas as pd
 import psycopg2
@@ -23,7 +24,8 @@ import json
 
 def test():
     # replace the "demo" apikey below with your own key from https://www.alphavantage.co/support/#api-key
-    url = 'https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=gc&apikey=0LZXEXVSI56B78G2'
+    apikey = os.getenv('ALPHAVANTAGE_API_KEY', 'demo')
+    url = f'https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=gc&apikey={apikey}'
     r = requests.get(url)
     data = r.json()
 
@@ -32,7 +34,8 @@ def test():
 # replace the "demo" apikey below with your own key from https://www.alphavantage.co/support/#api-key
 def get_daily_data(symbol):
 
-    CSV_URL = 'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol='+symbol+'&outputsize=full&apikey=0LZXEXVSI56B78G2&datatype=csv'
+    apikey = os.getenv('ALPHAVANTAGE_API_KEY', 'demo')
+    CSV_URL = f'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol={symbol}&outputsize=full&apikey={apikey}&datatype=csv'
 
     with requests.Session() as s:
         download = s.get(CSV_URL)
@@ -43,7 +46,8 @@ def get_daily_data(symbol):
     return my_list
 
 def get_fundamental_data(symbol, stats):
-    CSV_URL = 'https://www.alphavantage.co/query?function='+stats+'&symbol='+symbol+'&apikey=0LZXEXVSI56B78G2'
+    apikey = os.getenv('ALPHAVANTAGE_API_KEY', 'demo')
+    CSV_URL = f'https://www.alphavantage.co/query?function={stats}&symbol={symbol}&apikey={apikey}'
     r = requests.get(CSV_URL)
     data = r.json()
     
@@ -166,7 +170,8 @@ def get_data_yfinnace(symbol):
 
 def get_daily_dataUST(maturity):
 
-    CSV_URL = 'https://www.alphavantage.co/query?function=TREASURY_YIELD&interval=daily&maturity='+maturity+'&apikey=0LZXEXVSI56B78G2&datatype=csv'
+    apikey = os.getenv('ALPHAVANTAGE_API_KEY', 'demo')
+    CSV_URL = f'https://www.alphavantage.co/query?function=TREASURY_YIELD&interval=daily&maturity={maturity}&apikey={apikey}&datatype=csv'
 
     with requests.Session() as s:
         download = s.get(CSV_URL)
@@ -186,11 +191,13 @@ def convert_pandas(data):
     return price_data
 
 def create_connection():
+    # SECURITY WARNING: Use environment variables for credentials in production
+    # Example: password = os.getenv('DB_PASSWORD')
     conn = psycopg2.connect(
-        host="localhost",
-        database="Stock_Data",
-        user="postgres",
-        password="Azk4@123"
+        host=os.getenv('DB_HOST', 'localhost'),
+        database=os.getenv('DB_NAME', 'Stock_Data'),
+        user=os.getenv('DB_USER', 'postgres'),
+        password=os.getenv('DB_PASSWORD')  # Required: must be set in environment
     )
     return conn
 
@@ -545,10 +552,13 @@ def print_graph(stock_name, n=None):
     fig.show()
 
 async def send_telegram(filename):
-    # Telegram Bot Token
-    bot_token = "6247608742:AAED8-WJunxqAbrmQSqW9h21536BrYEsyOo"
-    # Print the Channel ID
-    channel_id = '-1001845087305'
+    # SECURITY WARNING: Use environment variables for credentials in production
+    # Get Telegram credentials from environment
+    bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
+    channel_id = os.getenv('TELEGRAM_CHANNEL_ID', '-1001845087305')
+
+    if not bot_token:
+        raise ValueError("TELEGRAM_BOT_TOKEN environment variable not set")
 
     # Message text
     message_text = 'Check out '+filename.replace('.png','')
