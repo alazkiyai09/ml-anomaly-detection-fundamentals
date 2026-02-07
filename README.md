@@ -203,8 +203,9 @@ This is a learning repository. Feel free to open issues or pull requests for imp
 
 ## Author
 
-**Al Azkiyai**
+**Ahmad Whafa Azka Al Azkiyai**
 - GitHub: [alazkiyai09](https://github.com/alazkiyai09)
+- Email: [azka.alazkiyai@outlook.com](mailto:azka.alazkiyai@outlook.com)
 - Specialization: Fraud Detection & AI Security
 
 ## References

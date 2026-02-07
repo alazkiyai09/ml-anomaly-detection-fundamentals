@@ -1,4 +1,5 @@
 import csv
+import os
 import requests
 import pandas as pd
 import psycopg2
@@ -37,11 +38,12 @@ from tensorflow.keras import regularizers
 import pickle
 
 def create_connection():
+    # SECURITY WARNING: Use environment variables for credentials in production
     conn = psycopg2.connect(
-        host="localhost",
-        database="Stock_Data",
-        user="postgres",
-        password="Azk4@123"
+        host=os.getenv('DB_HOST', 'localhost'),
+        database=os.getenv('DB_NAME', 'Stock_Data'),
+        user=os.getenv('DB_USER', 'postgres'),
+        password=os.getenv('DB_PASSWORD')  # Required: must be set in environment
     )
     return conn
 
@@ -53,7 +55,8 @@ def read_table(table_name):
     # Define the table name in the PostgreSQL database
 
     # Execute a SELECT query to fetch the data from the table
-    cursor.execute(f"SELECT * FROM {table_name}")
+    # Use sql.Identifier to prevent SQL injection
+    cursor.execute(sql.SQL("SELECT * FROM {}").format(sql.Identifier(table_name)))
 
     # Fetch all the rows from the result set
     rows = cursor.fetchall()
