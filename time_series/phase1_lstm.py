@@ -231,8 +231,8 @@ def read_table(table_name):
 
     # Define the table name in the PostgreSQL database
 
-    # Execute a SELECT query to fetch the data from the table
-    cursor.execute(f"SELECT * FROM {table_name}")
+    # Execute a SELECT query to fetch the data from the table (safe from SQL injection)
+    cursor.execute(sql.SQL("SELECT * FROM {}").format(sql.Identifier(table_name)))
 
     # Fetch all the rows from the result set
     rows = cursor.fetchall()
@@ -256,8 +256,8 @@ def insert_latest_database(new_record, table_name):
     conn = create_connection()
     cursor = conn.cursor()
 
-    # Execute a SELECT query to get the last date in the table
-    cursor.execute(f"SELECT MAX(Timestamp) FROM {table_name}")
+    # Execute a SELECT query to get the last date in the table (safe from SQL injection)
+    cursor.execute(sql.SQL("SELECT MAX(Timestamp) FROM {}").format(sql.Identifier(table_name)))
 
     # Fetch the last date from the result set
     last_date = cursor.fetchone()[0]
@@ -332,8 +332,11 @@ def create_new_daily_table(new_table_name, id=1):
     elif id == 3:
         existing_table_name = "yfinance_data"
 
-    # Check if the table already exists
-    cursor.execute(f"SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '{new_table_name}')")
+    # Check if the table already exists (safe from SQL injection)
+    cursor.execute(
+        sql.SQL("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = {})")
+        .format(sql.Literal(new_table_name))
+    )
     table_exists = cursor.fetchone()[0]
 
     if table_exists:
@@ -341,8 +344,8 @@ def create_new_daily_table(new_table_name, id=1):
         return False
     else:
     
-        # Get the column names and data types from the existing table
-        cursor.execute(f"SELECT * FROM {existing_table_name} LIMIT 0")
+        # Get the column names and data types from the existing table (safe from SQL injection)
+        cursor.execute(sql.SQL("SELECT * FROM {} LIMIT 0").format(sql.Identifier(existing_table_name)))
         columns = [desc[0] for desc in cursor.description]
         oid_data_types = [desc[1] for desc in cursor.description]
 
@@ -555,10 +558,12 @@ async def send_telegram(filename):
     # SECURITY WARNING: Use environment variables for credentials in production
     # Get Telegram credentials from environment
     bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
-    channel_id = os.getenv('TELEGRAM_CHANNEL_ID', '-1001845087305')
+    channel_id = os.getenv('TELEGRAM_CHANNEL_ID')
 
     if not bot_token:
         raise ValueError("TELEGRAM_BOT_TOKEN environment variable not set")
+    if not channel_id:
+        raise ValueError("TELEGRAM_CHANNEL_ID environment variable not set")
 
     # Message text
     message_text = 'Check out '+filename.replace('.png','')
